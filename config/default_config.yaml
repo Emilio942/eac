@@ -1,0 +1,76 @@
+# Emergent Adaptive Core Configuration
+
+# Safety settings
+safety:
+  level: high  # low, medium, high
+  constraints:
+    architectural_integrity: 0.8
+    operational_stability: 0.9
+    modification_scope: 0.7
+    rollback_capability: 0.9
+
+# Recursive Architecture settings
+recursive_architecture:
+  modification_threshold: 0.7
+  initial_modules:
+    - perception
+    - reasoning
+    - planning
+    - memory
+
+# Curiosity Engine settings
+curiosity_engine:
+  novelty_threshold: 0.6
+  exploration_rate: 0.3
+  curiosity_decay: 0.01
+  domains:
+    - problem_structure
+    - solution_approaches
+    - abstraction_levels
+    - architecture_modifications
+    - reasoning_methods
+    - data_patterns
+    - causal_relationships
+
+# Abstraction Learning settings
+abstraction_learning:
+  num_abstraction_levels: 5
+  abstraction_threshold: 0.65
+
+# Controlled Randomness settings
+controlled_randomness:
+  base_exploration_rate: 0.3
+  exploration_decay: 0.001
+  min_exploration_rate: 0.05
+  strategies:
+    gaussian_noise:
+      weight: 0.3
+      params:
+        mean: 0.0
+        std: 1.0
+    uniform_sampling:
+      weight: 0.2
+      params:
+        low: -1.0
+        high: 1.0
+    categorical_sampling:
+      weight: 0.2
+      params:
+        categories:
+          - option1
+          - option2
+          - option3
+          - option4
+    random_mutation:
+      weight: 0.15
+      params:
+        mutation_rate: 0.1
+    recombination:
+      weight: 0.15
+      params:
+        crossover_points: 2
+
+# Monitoring settings
+monitoring:
+  log_level: INFO
+  metrics_export_interval: 100
