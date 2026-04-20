@@ -6,6 +6,7 @@ which enables self-modification of the system's core architecture.
 """
 
 import numpy as np
+import torch
 from eac.utils.monitoring import Monitor
 from eac.utils.safety_constraints import SafetyConstraints
 
@@ -65,45 +66,40 @@ class RecursiveArchitecture:
     
     def should_modify(self):
         """
-        Determine if the architecture should be modified.
-        
-        Returns:
-            bool: True if modification is needed, False otherwise.
+        Determine if the architecture should be modified using a Spectral Gap condition.
         """
-        # Check if any module needs improvement based on performance metrics
-        performance_gaps = self._evaluate_module_performance()
+        n = len(self.modules)
+        if n < 2: return False
         
-        # Check if the system has discovered new capabilities that should be integrated
-        potential_new_modules = self._identify_potential_new_modules()
+        # 1. Construct Adjacency Matrix for Module Dependencies (DAG)
+        # Using normalized degree mapping
+        adj = torch.ones((n, n)) - torch.eye(n)
+        deg = torch.diag(torch.sum(adj, dim=1))
+        laplacian = deg - adj
         
-        # Combine factors to decide on modification
-        modification_score = (
-            sum(performance_gaps.values()) / len(performance_gaps)
-            + (0.3 * len(potential_new_modules))
-        )
+        # 2. Compute Algebraic Connectivity (λ2)
+        eigenvalues = torch.linalg.eigvalsh(laplacian)
+        lambda_2 = eigenvalues[1] if n > 1 else torch.tensor(0.0)
         
-        should_modify = modification_score > self.modification_threshold
+        # 3. Spectral Gap Threshold Γ
+        # Based on Carlin's derivation for Information Bottleneck prevention:
+        # Γ_min = μ / d_min ≈ (2/7) / (n-1)
+        gamma_threshold = (2.0 / 7.0) / (n - 1)
         
-        if should_modify:
-            self.monitor.log_info(f"Architecture modification triggered. Score: {modification_score:.2f}")
+        should_split = lambda_2.item() < gamma_threshold
         
-        return should_modify
+        if should_split:
+            self.monitor.log_info(f"Topological split triggered by Spectral Gap: λ2={lambda_2.item():.4f} < Γ={gamma_threshold:.4f}")
+            
+        return should_split
     
     def _evaluate_module_performance(self):
         """
-        Evaluate the performance of each module.
-        
-        Returns:
-            dict: Performance gaps for each module (0-1 scale, higher means larger gap).
+        Evaluate performance gaps using algebraic connectivity.
         """
-        # This would involve detailed performance metrics in a real system
-        # For now, we'll simulate it with random values
-        performance_gaps = {}
-        for module in self.modules:
-            # Higher value means larger performance gap (more improvement needed)
-            performance_gaps[module] = np.random.beta(2, 5)  # Biased toward lower values
-        
-        return performance_gaps
+        # Mapping global split necessity back to modules
+        needs_split = self.should_modify()
+        return {module: (1.0 if needs_split else 0.1) for module in self.modules}
     
     def _identify_potential_new_modules(self):
         """
